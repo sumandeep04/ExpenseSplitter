@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Groups')}"></head>
+<body th:replace="~{fragments/layout :: shell(~{::main}, 'Groups', 'groups')}">
+<main>
+    <section class="page-heading"><div><p class="eyebrow">ORGANIZE TOGETHER</p><h1>Your groups</h1><p class="muted">Trips, roommates, meals, and every shared plan.</p></div></section>
+    <div class="split-layout">
+        <section class="panel form-panel">
+            <div class="panel-heading"><div><p class="eyebrow" th:text="${editGroup == null ? 'GET STARTED' : 'GROUP SETTINGS'}">GET STARTED</p><h2 th:text="${editGroup == null ? 'Create a group' : 'Edit group'}">Create a group</h2></div></div>
+            <form method="post" th:action="@{/groups/save}" class="form-stack">
+                <input th:if="${editGroup != null}" type="hidden" name="groupId" th:value="${editGroup.id}">
+                <label>Group name<input name="name" required maxlength="100" placeholder="e.g. Weekend in Goa" th:value="${editGroup?.name}"></label>
+                <label>Category<select name="category" required><option th:each="category : ${groupCategories}" th:value="${category.name()}" th:text="${category}" th:selected="${editGroup != null and editGroup.category == category}"></option></select></label>
+                <label>Description <span class="optional">Optional</span><textarea name="description" rows="3" placeholder="What's this group for?" th:text="${editGroup?.description}"></textarea></label>
+                <div class="form-actions"><button class="button primary" type="submit" th:text="${editGroup == null ? 'Create group' : 'Save changes'}">Create group</button><a th:if="${editGroup != null}" class="button secondary" th:href="@{/groups}">Cancel</a></div>
+            </form>
+        </section>
+        <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h2 th:text="${groups.size() + ' groups'}">0 groups</h2></div></div>
+            <div th:if="${groups.isEmpty()}" class="empty-state compact"><span>◫</span><h3>Nothing to show yet</h3><p>Create your first group to start tracking shared spending.</p></div>
+            <article th:each="group : ${groups}" class="group-card">
+                <div class="group-symbol">◫</div><div class="group-card-copy"><a th:href="@{/(groupId=${group.id})}" th:text="${group.name}">Group name</a><p th:text="${group.description == null or group.description.isBlank() ? group.category : group.description}">Description</p><small th:text="${group.memberCount + ' members · ' + group.category}">0 members</small></div>
+                <div class="group-card-actions"><a class="icon-button" th:href="@{/groups(editId=${group.id})}" aria-label="Edit group">✎</a>
+                    <form method="post" th:action="@{/groups/{id}/delete(id=${group.id})}" onsubmit="return confirm('Delete this group and its expenses? This cannot be undone.')"><button class="icon-button danger-text" type="submit" aria-label="Delete group">⌫</button></form></div>
+            </article>
+        </section>
+    </div>
+</main>
+</body>
+</html>

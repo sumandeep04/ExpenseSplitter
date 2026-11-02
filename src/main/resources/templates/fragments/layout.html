@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <title th:text="${title + ' · Expense Splitter'}">Expense Splitter</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/app.js}"></script>
+</head>
+<body>
+<div th:fragment="shell(content, title, active)" class="app-shell">
+    <aside class="sidebar">
+        <a class="brand" th:href="@{/}">
+            <span class="brand-mark">↗</span>
+            <span><strong>Splitwise</strong><small>EXPENSE MANAGER</small></span>
+        </a>
+        <nav class="nav-links" aria-label="Main navigation">
+            <a th:href="@{/}" th:classappend="${active == 'dashboard'} ? 'active' : ''"><span>⌂</span> Overview</a>
+            <a th:href="@{/groups}" th:classappend="${active == 'groups'} ? 'active' : ''"><span>◫</span> Groups</a>
+            <a th:href="@{/members}" th:classappend="${active == 'members'} ? 'active' : ''"><span>♙</span> Members</a>
+            <a th:href="@{/expenses}" th:classappend="${active == 'expenses'} ? 'active' : ''"><span>▤</span> Expenses</a>
+            <a th:href="@{/settlements}" th:classappend="${active == 'settlements'} ? 'active' : ''"><span>⇄</span> Settlements</a>
+        </nav>
+        <div class="sidebar-note"><span class="status-dot"></span> Your data stays on this device</div>
+    </aside>
+    <div class="content-area">
+        <header class="topbar">
+            <div class="mobile-brand"><span class="brand-mark">↗</span><strong>Splitwise</strong></div>
+            <div class="breadcrumb">WORKSPACE <span>/</span> <b th:text="${title}">Overview</b></div>
+            <a class="top-action" th:href="@{/groups}">＋ <span>New group</span></a>
+        </header>
+        <div class="main-content">
+            <div th:if="${success}" class="alert success" role="status" th:text="${success}"></div>
+            <div th:if="${error}" class="alert error" role="alert" th:text="${error}"></div>
+            <th:block th:replace="${content}"></th:block>
+        </div>
+        <footer class="footer">Expense Splitter <span>·</span> Private, local SQLite storage</footer>
+    </div>
+</div>
+</body>
+</html>

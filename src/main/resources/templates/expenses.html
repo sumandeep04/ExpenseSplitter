@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Expenses')}"></head>
+<body th:replace="~{fragments/layout :: shell(~{::main}, 'Expenses', 'expenses')}">
+<main>
+    <section class="page-heading"><div><p class="eyebrow">EVERY SHARED COST, ACCOUNTED FOR</p><h1>Expenses</h1><p class="muted">Record what was paid and decide exactly who shares it.</p></div></section>
+    <section class="panel group-picker-panel"><form method="get" th:action="@{/expenses}" class="picker-form"><label for="expenseGroup">Select group</label><select id="expenseGroup" name="groupId" onchange="this.form.submit()"><option value="">Choose a group</option><option th:each="group : ${groups}" th:value="${group.id}" th:selected="${selectedGroup != null and selectedGroup.id == group.id}" th:text="${group.name}"></option></select></form>
+        <a th:if="${selectedGroup != null}" class="button secondary" th:href="@{/members(groupId=${selectedGroup.id})}">Manage members →</a></section>
+    <div th:if="${groups.isEmpty()}" class="panel empty-state"><span>◫</span><h3>Create a group first</h3><p>Expenses belong to a group and its members.</p><a class="button primary" th:href="@{/groups}">Create group</a></div>
+    <div th:if="${selectedGroup != null}" class="split-layout expense-layout">
+        <section class="panel form-panel"><div class="panel-heading"><div><p class="eyebrow" th:text="${selectedGroup.name}">GROUP</p><h2 th:text="${editExpense == null ? 'Add an expense' : 'Edit expense'}">Add an expense</h2></div></div>
+            <div th:if="${members.isEmpty()}" class="empty-inline">Add at least one member before recording expenses. <a th:href="@{/members(groupId=${selectedGroup.id})}">Add members →</a></div>
+            <form th:if="${!members.isEmpty()}" method="post" th:action="@{/expenses/save}" class="form-stack" id="expenseForm">
+                <input type="hidden" name="groupId" th:value="${selectedGroup.id}"><input th:if="${editExpense != null}" type="hidden" name="expenseId" th:value="${editExpense.id}">
+                <label>Description<input name="description" required maxlength="140" placeholder="Dinner, tickets, groceries…" th:value="${editExpense?.description}"></label>
+                <div class="form-row"><label>Amount (<span th:text="${currency}">₹</span>)<input type="number" name="amount" min="0.01" step="0.01" required placeholder="0.00" th:value="${editExpense?.amount}"></label>
+                    <label>Date<input type="date" name="expenseDate" required th:value="${editExpense == null ? #temporals.format(#temporals.createNow(),'yyyy-MM-dd') : editExpense.expenseDate}"></label></div>
+                <div class="form-row"><label>Paid by<select name="paidByMemberId" required><option value="">Choose payer</option><option th:each="member : ${members}" th:value="${member.id}" th:text="${member.name}" th:selected="${editExpense != null and editExpense.paidByMemberId == member.id}"></option></select></label>
+                    <label>Category<select name="category"><option th:each="category : ${categories}" th:value="${category.name()}" th:text="${category}" th:selected="${editExpense != null and editExpense.category == category}"></option></select></label></div>
+                <label>Split method<select name="splitMethod" id="splitMethod"><option th:each="method : ${splitMethods}" th:value="${method.name()}" th:text="${method}" th:selected="${editExpense != null and editExpense.splitMethod == method}"></option></select></label>
+                <fieldset class="participant-fieldset"><legend>Who shares this expense?</legend><p class="field-hint">Choose one or more members. Equal shares are calculated automatically.</p>
+                    <div th:each="member : ${members}" class="participant-row">
+                        <label class="participant-check"><input type="checkbox" name="participantIds" th:value="${member.id}" th:checked="${editParticipantIds.contains(member.id)}"><span th:text="${member.name}">Member</span></label>
+                        <label class="split-input"><span class="value-label">Amount</span><input type="number" min="0" step="0.01" th:name="${'share_' + member.id}" th:value="${editShares[member.id]}" placeholder="0.00" aria-label="Custom share"></label>
+                        <label class="split-input percent-input"><span class="value-label">Percent</span><input type="number" min="0" max="100" step="0.01" th:name="${'percentage_' + member.id}" placeholder="0.00" aria-label="Share percentage"></label>
+                    </div>
+                </fieldset>
+                <label>Notes <span class="optional">Optional</span><textarea name="notes" rows="2" placeholder="Add a detail for your group…" th:text="${editExpense?.notes}"></textarea></label>
+                <div class="form-actions"><button class="button primary" type="submit" th:text="${editExpense == null ? 'Save expense' : 'Update expense'}">Save expense</button><a th:if="${editExpense != null}" class="button secondary" th:href="@{/expenses(groupId=${selectedGroup.id})}">Cancel</a></div>
+            </form>
+        </section>
+        <section class="panel expense-list-panel"><div class="panel-heading"><div><p class="eyebrow">GROUP ACTIVITY</p><h2 th:text="${expenses.size() + ' expenses'}">0 expenses</h2></div></div>
+            <div th:if="${expenses.isEmpty()}" class="empty-state compact"><span>▤</span><h3>No expenses yet</h3><p>Record the first shared cost using the form.</p></div>
+            <div class="table-wrap" th:if="${!expenses.isEmpty()}"><table><thead><tr><th>Expense</th><th>Paid by</th><th>Date</th><th class="align-right">Amount</th><th></th></tr></thead><tbody>
+                <tr th:each="expense : ${expenses}"><td><strong th:text="${expense.description}">Expense</strong><small class="table-sub"><span th:text="${expense.category}">Category</span> · <span th:text="${expense.splitMethod}">EQUAL</span></small></td><td th:text="${expense.paidByMemberName}">Member</td><td th:text="${expense.expenseDate}">Date</td><td class="align-right amount" th:text="${currency + ' ' + #numbers.formatDecimal(expense.amount,1,2)}">₹ 0.00</td><td><div class="table-actions"><a class="icon-button" th:href="@{/expenses(groupId=${selectedGroup.id},editId=${expense.id})}" aria-label="Edit expense">✎</a><form method="post" th:action="@{/expenses/{id}/delete(id=${expense.id},groupId=${selectedGroup.id})}" onsubmit="return confirm('Delete this expense?')"><button class="icon-button danger-text" type="submit" aria-label="Delete expense">⌫</button></form></div></td></tr>
+            </tbody></table></div>
+        </section>
+    </div>
+</main>
+</body>
+</html>

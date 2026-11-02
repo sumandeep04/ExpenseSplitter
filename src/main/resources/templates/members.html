@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Members')}"></head>
+<body th:replace="~{fragments/layout :: shell(~{::main}, 'Members', 'members')}">
+<main>
+    <section class="page-heading"><div><p class="eyebrow">THE PEOPLE IN YOUR PLANS</p><h1>Members</h1><p class="muted">Add people to a group and keep their details up to date.</p></div></section>
+    <section class="panel group-picker-panel"><form method="get" th:action="@{/members}" class="picker-form"><label for="memberGroup">Select group</label><select id="memberGroup" name="groupId" onchange="this.form.submit()"><option value="">Choose a group</option><option th:each="group : ${groups}" th:value="${group.id}" th:selected="${selectedGroup != null and selectedGroup.id == group.id}" th:text="${group.name}"></option></select></form>
+        <a th:if="${selectedGroup != null}" class="button secondary" th:href="@{/expenses(groupId=${selectedGroup.id})}">View group expenses →</a></section>
+    <div th:if="${groups.isEmpty()}" class="panel empty-state"><span>◫</span><h3>Create a group first</h3><p>Members are organized within groups.</p><a class="button primary" th:href="@{/groups}">Create group</a></div>
+    <div th:if="${selectedGroup != null}" class="split-layout">
+        <section class="panel form-panel"><div class="panel-heading"><div><p class="eyebrow">GROUP MEMBER</p><h2 th:text="${editMember == null ? 'Add a member' : 'Edit member'}">Add a member</h2></div></div>
+            <form method="post" th:action="@{/members/save}" class="form-stack">
+                <input type="hidden" name="groupId" th:value="${selectedGroup.id}"><input th:if="${editMember != null}" type="hidden" name="memberId" th:value="${editMember.id}">
+                <label>Full name<input name="name" required maxlength="100" placeholder="e.g. Alex Morgan" th:value="${editMember?.name}"></label>
+                <label>Email <span class="optional">Optional</span><input name="email" type="email" placeholder="alex@example.com" th:value="${editMember?.email}"></label>
+                <label>Phone <span class="optional">Optional</span><input name="phone" type="tel" placeholder="+1 555 0100" th:value="${editMember?.phone}"></label>
+                <div class="form-actions"><button class="button primary" type="submit" th:text="${editMember == null ? 'Add member' : 'Save changes'}">Add member</button><a th:if="${editMember != null}" class="button secondary" th:href="@{/members(groupId=${selectedGroup.id})}">Cancel</a></div>
+            </form>
+        </section>
+        <section class="panel"><div class="panel-heading"><div><p class="eyebrow" th:text="${selectedGroup.name}">GROUP</p><h2 th:text="${members.size() + ' members'}">0 members</h2></div></div>
+            <div th:if="${members.isEmpty()}" class="empty-inline">Add the first person to this group.</div>
+            <div th:each="member : ${members}" class="member-row"><div class="avatar" th:text="${#strings.substring(member.name,0,1).toUpperCase()}">M</div><div class="member-copy"><strong th:text="${member.name}">Name</strong><small th:text="${member.email == null ? (member.phone == null ? 'Group member' : member.phone) : member.email}">Email</small></div>
+                <a class="icon-button" th:href="@{/members(groupId=${selectedGroup.id},editId=${member.id})}" aria-label="Edit member">✎</a>
+                <form method="post" th:action="@{/members/{id}/remove(id=${member.id},groupId=${selectedGroup.id})}" onsubmit="return confirm('Remove this member from the group?')"><button class="icon-button danger-text" type="submit" aria-label="Remove member">⌫</button></form></div>
+        </section>
+    </div>
+</main>
+</body>
+</html>

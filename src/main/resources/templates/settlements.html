@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Settlements')}"></head>
+<body th:replace="~{fragments/layout :: shell(~{::main}, 'Settlements', 'settlements')}">
+<main>
+    <section class="page-heading"><div><p class="eyebrow">CLOSE THE LOOP</p><h1>Settlements</h1><p class="muted">See the simplest way to settle up, and track completed payments.</p></div></section>
+    <section class="panel group-picker-panel"><form method="get" th:action="@{/settlements}" class="picker-form"><label for="settlementGroup">Select group</label><select id="settlementGroup" name="groupId" onchange="this.form.submit()"><option value="">All groups</option><option th:each="group : ${groups}" th:value="${group.id}" th:selected="${selectedGroup != null and selectedGroup.id == group.id}" th:text="${group.name}"></option></select></form></section>
+    <section class="panel"><div class="panel-heading"><div><p class="eyebrow">RECOMMENDED</p><h2>Suggested transfers</h2></div></div>
+        <div th:if="${selectedGroup == null}" class="empty-inline">Choose a group to calculate who should pay whom.</div>
+        <div th:if="${selectedGroup != null and suggestions.isEmpty()}" class="empty-inline">No outstanding balances. This group is settled up.</div>
+        <div th:each="suggestion : ${suggestions}" class="suggestion-row settlement-suggestion">
+            <div class="transfer-icon">⇢</div><div class="suggestion-copy"><strong><span th:text="${suggestion.fromMemberName}">Alex</span> <small>pays</small> <span th:text="${suggestion.toMemberName}">Sam</span></strong><small>Optimized to reduce the number of transfers</small></div>
+            <b th:text="${currency + ' ' + #numbers.formatDecimal(suggestion.amount,1,2)}">₹ 0.00</b>
+            <form method="post" th:action="@{/settlements/create}"><input type="hidden" name="groupId" th:value="${selectedGroup.id}"><input type="hidden" name="fromMemberId" th:value="${suggestion.fromMemberId}"><input type="hidden" name="toMemberId" th:value="${suggestion.toMemberId}"><input type="hidden" name="amount" th:value="${suggestion.amount}"><button class="button small secondary" type="submit">Track transfer</button></form>
+        </div>
+    </section>
+    <section class="panel recent-panel"><div class="panel-heading"><div><p class="eyebrow">PAYMENT HISTORY</p><h2>Tracked settlements</h2></div></div>
+        <div th:if="${settlements.isEmpty()}" class="empty-inline">Settlements you track will show up here.</div>
+        <div class="table-wrap" th:if="${!settlements.isEmpty()}"><table><thead><tr><th>Group</th><th>From</th><th>To</th><th>Status</th><th class="align-right">Amount</th><th></th></tr></thead><tbody>
+            <tr th:each="settlement : ${settlements}"><td th:text="${settlement.groupName}">Group</td><td th:text="${settlement.fromMemberName}">From</td><td th:text="${settlement.toMemberName}">To</td><td><span class="pill" th:classappend="${settlement.status.name() == 'COMPLETED'} ? ' pill-green' : ''" th:text="${settlement.status}">PENDING</span></td><td class="align-right amount" th:text="${currency + ' ' + #numbers.formatDecimal(settlement.amount,1,2)}">₹ 0.00</td><td>
+                <form th:if="${settlement.status.name() == 'PENDING'}" method="post" th:action="@{/settlements/{id}/pay(id=${settlement.id},groupId=${settlement.groupId})}" onsubmit="return confirm('Mark this transfer as fully paid?')"><button class="button small primary" type="submit">Mark paid</button></form><span th:if="${settlement.status.name() == 'COMPLETED'}" class="paid-label">✓ Paid</span>
+            </td></tr>
+        </tbody></table></div>
+    </section>
+</main>
+</body>
+</html>
